@@ -13,4 +13,3 @@ void main() {
     expect(find.text('ISU Soil Moisture App'), findsOneWidget);
   });
 }
-
