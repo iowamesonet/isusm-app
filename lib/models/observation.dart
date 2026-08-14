@@ -67,12 +67,32 @@ class Observation {
     return null;
   }
 
+  /// Casts a field to a String if it is one, ignoring other types instead of
+  /// throwing (e.g. a stray numeric value where a string is expected).
+  static String? _parseString(dynamic value) => value is String ? value : null;
+
   factory Observation.fromGeoJsonFeature(Map<String, dynamic> feature) {
-    final properties = feature['properties'] as Map<String, dynamic>;
+    final rawProperties = feature['properties'];
+    if (rawProperties is! Map<String, dynamic>) {
+      throw const FormatException('Feature is missing a "properties" map');
+    }
+    final properties = rawProperties;
+
+    final stationId = feature['id'];
+    if (stationId is! String) {
+      throw const FormatException('Feature is missing a string "id"');
+    }
+
+    final validUtcRaw = properties['valid_utc'];
+    if (validUtcRaw is! String) {
+      throw const FormatException('Feature is missing "valid_utc"');
+    }
+    final validUtc = DateTime.parse(validUtcRaw);
+
     return Observation(
-      stationId: feature['id'] as String,
-      name: (properties['name'] ?? '') as String,
-      validUtc: DateTime.parse(properties['valid_utc'] as String),
+      stationId: stationId,
+      name: _parseString(properties['name']) ?? '',
+      validUtc: validUtc,
       tmpf: _parseNum(properties['tmpf']),
       dwpf: _parseNum(properties['dwpf']),
       rh: _parseNum(properties['rh']),
@@ -86,7 +106,7 @@ class Observation {
       sradWm2: _parseNum(properties['srad_wm2']),
       bat: _parseNum(properties['bat']),
       gust: _parseNum(properties['gust']),
-      wind: properties['wind'] as String?,
+      wind: _parseString(properties['wind']),
       soil04t: _parseNum(properties['soil04t']),
       soil12t: _parseNum(properties['soil12t']),
       soil24t: _parseNum(properties['soil24t']),

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:http/http.dart' as http;
 
@@ -20,15 +21,24 @@ class MesonetService {
   Future<List<Station>> fetchStations() async {
     final response = await _client.get(Uri.parse(stationsUrl));
     if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to load stations (HTTP ${response.statusCode})',
-      );
+      throw Exception('Failed to load stations (HTTP ${response.statusCode})');
     }
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     final features = data['features'] as List<dynamic>;
-    final stations = features
-        .map((f) => Station.fromGeoJsonFeature(f as Map<String, dynamic>))
-        .toList();
+    final stations = <Station>[];
+    for (final feature in features) {
+      try {
+        stations.add(
+          Station.fromGeoJsonFeature(feature as Map<String, dynamic>),
+        );
+      } on FormatException catch (e) {
+        // Skip a single malformed station rather than failing the whole list.
+        developer.log(
+          'Skipping malformed station feature: $e',
+          name: 'MesonetService',
+        );
+      }
+    }
     stations.sort((a, b) => a.name.compareTo(b.name));
     return stations;
   }
@@ -45,10 +55,18 @@ class MesonetService {
     final features = data['features'] as List<dynamic>;
     final observations = <String, Observation>{};
     for (final feature in features) {
-      final observation = Observation.fromGeoJsonFeature(
-        feature as Map<String, dynamic>,
-      );
-      observations[observation.stationId] = observation;
+      try {
+        final observation = Observation.fromGeoJsonFeature(
+          feature as Map<String, dynamic>,
+        );
+        observations[observation.stationId] = observation;
+      } on FormatException catch (e) {
+        // Skip a single malformed observation rather than failing the whole batch.
+        developer.log(
+          'Skipping malformed observation feature: $e',
+          name: 'MesonetService',
+        );
+      }
     }
     return observations;
   }

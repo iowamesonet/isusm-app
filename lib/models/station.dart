@@ -13,14 +13,38 @@ class Station {
   });
 
   factory Station.fromGeoJsonFeature(Map<String, dynamic> feature) {
-    final properties = feature['properties'] as Map<String, dynamic>;
-    final geometry = feature['geometry'] as Map<String, dynamic>;
-    final coordinates = geometry['coordinates'] as List<dynamic>;
+    final rawProperties = feature['properties'];
+    if (rawProperties is! Map<String, dynamic>) {
+      throw const FormatException('Feature is missing a "properties" map');
+    }
+    final properties = rawProperties;
+
+    final id = properties['id'];
+    if (id is! String) {
+      throw const FormatException('Feature is missing a string "id"');
+    }
+
+    final geometry = feature['geometry'];
+    if (geometry is! Map<String, dynamic>) {
+      throw const FormatException('Feature is missing a "geometry" map');
+    }
+    final coordinates = geometry['coordinates'];
+    if (coordinates is! List || coordinates.length < 2) {
+      throw const FormatException(
+        'Feature geometry is missing "coordinates" with 2+ elements',
+      );
+    }
+    final rawLon = coordinates[0];
+    final rawLat = coordinates[1];
+    if (rawLon is! num || rawLat is! num) {
+      throw const FormatException('Feature coordinates must be numeric');
+    }
+
     return Station(
-      id: properties['id'] as String,
+      id: id,
       name: (properties['name'] ?? properties['plot_name'] ?? '') as String,
-      longitude: (coordinates[0] as num).toDouble(),
-      latitude: (coordinates[1] as num).toDouble(),
+      longitude: rawLon.toDouble(),
+      latitude: rawLat.toDouble(),
     );
   }
 }
