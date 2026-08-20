@@ -9,12 +9,21 @@ plugins {
 
 val keystorePropertiesFile = rootProject.file("key.properties")
 val keystoreProperties = Properties()
-if (!keystorePropertiesFile.exists()) {
-    throw GradleException(
-        "Missing android/key.properties. Configure the Play upload keystore before building a release bundle.",
-    )
+gradle.taskGraph.whenReady {
+    val releaseBuildRequested = allTasks.any { task ->
+        task.name == "assembleRelease" || task.name == "bundleRelease"
+    }
+    if (releaseBuildRequested && !keystorePropertiesFile.exists()) {
+        throw GradleException(
+            "Missing android/key.properties. Configure the Play upload keystore before building a release bundle.",
+        )
+    }
+    if (releaseBuildRequested) {
+        FileInputStream(keystorePropertiesFile).use { inputStream ->
+            keystoreProperties.load(inputStream)
+        }
+    }
 }
-keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 
 android {
     namespace = "edu.iastate.mesonet.isusm_app"
