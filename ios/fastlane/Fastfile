@@ -1,3 +1,5 @@
+require "base64"
+
 default_platform(:ios)
 
 platform :ios do
@@ -10,13 +12,26 @@ platform :ios do
       is_key_content_base64: true
     )
 
-    build_app(
-      workspace: "Runner.xcworkspace",
-      scheme: "Runner",
-      export_method: "app-store",
-      xcargs: "-allowProvisioningUpdates FLUTTER_BUILD_NUMBER=#{ENV["GITHUB_RUN_NUMBER"]} " \
-              "DEVELOPMENT_TEAM=#{ENV["APPLE_TEAM_ID"]} CODE_SIGN_STYLE=Automatic"
-    )
+    # xcodebuild does not read the api key from the fastlane lane context, it
+    # needs the key file path plus id/issuer passed explicitly for -allowProvisioningUpdates.
+    auth_key_path = File.expand_path("AuthKey.p8")
+    File.write(auth_key_path, Base64.decode64(ENV["ASC_KEY_CONTENT"]))
+
+    begin
+      build_app(
+        workspace: "Runner.xcworkspace",
+        scheme: "Runner",
+        export_method: "app-store",
+        xcargs: "-allowProvisioningUpdates " \
+                "-authenticationKeyPath #{auth_key_path} " \
+                "-authenticationKeyID #{ENV["ASC_KEY_ID"]} " \
+                "-authenticationKeyIssuerID #{ENV["ASC_ISSUER_ID"]} " \
+                "FLUTTER_BUILD_NUMBER=#{ENV["GITHUB_RUN_NUMBER"]} " \
+                "DEVELOPMENT_TEAM=#{ENV["APPLE_TEAM_ID"]} CODE_SIGN_STYLE=Automatic"
+      )
+    ensure
+      File.delete(auth_key_path) if File.exist?(auth_key_path)
+    end
 
     upload_to_testflight(api_key: api_key)
   end
