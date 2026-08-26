@@ -1,0 +1,2 @@
+app_identifier("edu.iastate.mesonet.isusmApp")
+team_id(ENV["APPLE_TEAM_ID"])
