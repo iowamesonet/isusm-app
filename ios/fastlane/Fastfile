@@ -39,13 +39,17 @@ platform :ios do
     begin
       import_certificate(
         certificate_path: cert_path,
-        certificate_password: ENV["IOS_DIST_CERT_PASSWORD"],
+        certificate_password: ENV["IOS_DIST_CERT_PASSWORD"].to_s.strip,
         keychain_name: keychain_name,
         keychain_password: keychain_password
       )
     ensure
       File.delete(cert_path) if File.exist?(cert_path)
     end
+
+    # Prove whether the cert (with its private key) actually landed in the
+    # keychain, since a bad password fails import_certificate silently.
+    UI.message(sh("security find-identity -v -p codesigning #{keychain_name.shellescape}"))
 
     # Automatic signing's -allowProvisioningUpdates could never successfully create
     # a distribution profile for this team, so install the manually-generated App
