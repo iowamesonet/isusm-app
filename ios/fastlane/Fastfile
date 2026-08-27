@@ -12,6 +12,13 @@ platform :ios do
       is_key_content_base64: true
     )
 
+    # Sanity-check the key via fastlane's own (spaceship) ASC client, which is
+    # independent of xcodebuild's built-in -authenticationKeyPath auth. If this
+    # fails too, the ASC_KEY_ID/ASC_ISSUER_ID/ASC_KEY_CONTENT secrets themselves
+    # are the problem, not the xcodebuild provisioning-update flow.
+    build_number = latest_testflight_build_number(api_key: api_key)
+    UI.success("ASC API key check passed (latest TestFlight build: #{build_number})")
+
     # xcodebuild does not read the api key from the fastlane lane context, it
     # needs the key file path plus id/issuer passed explicitly for -allowProvisioningUpdates.
     # xcodebuild expects the filename itself to encode the key id (AuthKey_<KEY_ID>.p8),
