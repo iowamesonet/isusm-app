@@ -56,7 +56,10 @@ platform :ios do
     profile_uuid = nil
     begin
       install_provisioning_profile(path: profile_path)
-      profile_uuid = sh("security cms -D -i #{profile_path.shellescape} | /usr/libexec/PlistBuddy -c 'Print UUID' /dev/stdin").strip
+      plist_path = File.expand_path("distribution_profile.plist")
+      sh("security cms -D -i #{profile_path.shellescape} -o #{plist_path.shellescape}")
+      profile_uuid = sh("/usr/libexec/PlistBuddy -c 'Print UUID' #{plist_path.shellescape}").strip
+      File.delete(plist_path) if File.exist?(plist_path)
     ensure
       File.delete(profile_path) if File.exist?(profile_path)
     end
