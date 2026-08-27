@@ -28,6 +28,24 @@ jobs:
           bundler-cache: true
           working-directory: ios
 
+      - name: Check App Store Connect key
+        working-directory: ios
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+        run: |
+          echo "Key ID length: ${#ASC_KEY_ID}"
+          echo "Issuer ID length: ${#ASC_ISSUER_ID}"
+          echo "Key content length: ${#ASC_KEY_CONTENT}"
+
+          echo "$ASC_KEY_CONTENT" | base64 --decode > AuthKey.p8
+
+          echo "Key file:"
+          openssl ec -in AuthKey.p8 -noout -text >/dev/null && echo "Valid EC private key" || echo "INVALID KEY"
+
+          rm -f AuthKey.p8
+
       - name: Build & upload to TestFlight
         working-directory: ios
         env:
