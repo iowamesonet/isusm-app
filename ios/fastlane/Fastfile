@@ -72,7 +72,7 @@ platform :ios do
       build_app(
         workspace: "Runner.xcworkspace",
         scheme: "Runner",
-        export_method: "app-store-connect",
+        export_method: "app-store",
         export_options: {
           provisioningProfiles: {
             "edu.iastate.mesonet.isusmApp" => profile_uuid
