@@ -72,7 +72,12 @@ platform :ios do
       build_app(
         workspace: "Runner.xcworkspace",
         scheme: "Runner",
-        export_method: "app-store",
+        export_method: "app-store-connect",
+        export_options: {
+          provisioningProfiles: {
+            "edu.iastate.mesonet.isusmApp" => profile_uuid
+          }
+        },
         xcargs: "FLUTTER_BUILD_NUMBER=#{ENV["GITHUB_RUN_NUMBER"]} " \
                 "DEVELOPMENT_TEAM=#{ENV["APPLE_TEAM_ID"]} " \
                 "CODE_SIGN_STYLE=Manual " \
