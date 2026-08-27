@@ -36,7 +36,11 @@ platform :ios do
                 "-authenticationKeyID #{ENV["ASC_KEY_ID"]} " \
                 "-authenticationKeyIssuerID #{ENV["ASC_ISSUER_ID"]} " \
                 "FLUTTER_BUILD_NUMBER=#{ENV["GITHUB_RUN_NUMBER"]} " \
-                "DEVELOPMENT_TEAM=#{ENV["APPLE_TEAM_ID"]} CODE_SIGN_STYLE=Automatic"
+                "DEVELOPMENT_TEAM=#{ENV["APPLE_TEAM_ID"]} CODE_SIGN_STYLE=Automatic " \
+                # project.pbxproj hardcodes CODE_SIGN_IDENTITY to "iPhone Developer" for
+                # Release/Profile, which makes automatic signing request a Development
+                # profile instead of Distribution; force the correct identity here.
+                "\"CODE_SIGN_IDENTITY[sdk=iphoneos*]=Apple Distribution\""
       )
     ensure
       File.delete(auth_key_path) if File.exist?(auth_key_path)
