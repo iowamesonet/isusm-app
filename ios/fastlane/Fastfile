@@ -14,7 +14,9 @@ platform :ios do
 
     # xcodebuild does not read the api key from the fastlane lane context, it
     # needs the key file path plus id/issuer passed explicitly for -allowProvisioningUpdates.
-    auth_key_path = File.expand_path("AuthKey.p8")
+    # xcodebuild expects the filename itself to encode the key id (AuthKey_<KEY_ID>.p8),
+    # otherwise it can silently fail to authenticate against Apple (401 on listTeams.action).
+    auth_key_path = File.expand_path("AuthKey_#{ENV["ASC_KEY_ID"]}.p8")
     File.write(auth_key_path, Base64.decode64(ENV["ASC_KEY_CONTENT"]))
 
     begin
